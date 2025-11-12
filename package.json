@@ -1,0 +1,19 @@
+{
+  "name": "voidmerge-template",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "build:tsc": "tsc --build",
+    "build:esbuild": "esbuild --sourcemap --bundle src/index.ts --outfile=dist/bundle.js",
+    "build": "npm run build:tsc && npm run build:esbuild",
+    "start-docker": "npm run build && docker run -it --init --rm --expose 8080 -p 8080:8080 -v ./dist:/data ghcr.io/voidmerge/voidmerge-vm:latest vm test --code-file /data/bundle.js",
+    "start": "npm run build && vm test --code-file ./dist/bundle.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@voidmerge/voidmerge-code": "^0.0.8"
+  }
+}
