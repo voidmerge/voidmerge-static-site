@@ -1,35 +1,3 @@
-# voidmerge-template
+# voidmerge-static-site
 
-## Install dependencies:
-
-```sh
-npm install
-```
-
-## Run the VM Server (Using Docker):
-
-```sh
-npm run start-docker
-```
-
-## Open a browser:
-
-[http://127.0.0.1:8080/test/](http://127.0.0.1:8080/test/)
-
-## No Docker? Install the "vm" Cli Tool.
-
-[https://rustup.rs/](https://rustup.rs/)
-
-```sh
-cargo install voidmerge
-```
-
-## Run the VM Server (Using Native CLI):
-
-```sh
-npm start
-```
-
-## Open a browser:
-
-[http://127.0.0.1:8080/test/](http://127.0.0.1:8080/test/)
+VoidMerge Hooks For Hosting Static Web Content.

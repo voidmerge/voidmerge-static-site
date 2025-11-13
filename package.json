@@ -1,19 +1,26 @@
 {
-  "name": "voidmerge-template",
+  "name": "voidmerge-static-site",
   "version": "0.0.1",
+  "description": "VoidMerge Hooks For Hosting Static Web Content.",
   "type": "module",
   "scripts": {
     "build:tsc": "tsc --build",
-    "build:esbuild": "esbuild --sourcemap --bundle src/index.ts --outfile=dist/bundle.js",
+    "build:esbuild": "esbuild --sourcemap --bundle src/code.ts --outfile=dist/bundle-code.js",
     "build": "npm run build:tsc && npm run build:esbuild",
-    "start-docker": "npm run build && docker run -it --init --rm --expose 8080 -p 8080:8080 -v ./dist:/data ghcr.io/voidmerge/voidmerge-vm:latest vm test --code-file /data/bundle.js",
-    "start": "npm run build && vm test --code-file ./dist/bundle.js"
+    "start": "mkdir -p /tmp/vm-static-site && vm serve --sys-admin bobo --store /tmp/vm-static-site",
+    "install": "npm run build && vm ctx-setup --url http://127.0.0.1:8080 --token bobo --context vm-static-site --ctx-admin bobo && vm ctx-config --url http://127.0.0.1:8080 --token bobo --context vm-static-site --ctx-admin bobo --code-file ./dist/bundle-code.js"
   },
   "devDependencies": {
+    "@types/minimist": "^1.2.5",
+    "@types/node": "^24.10.1",
     "esbuild": "^0.27.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@voidmerge/voidmerge-code": "^0.0.8"
+    "@voidmerge/voidmerge-client": "^0.0.8",
+    "@voidmerge/voidmerge-code": "^0.0.8",
+    "mime": "^4.1.0",
+    "minimist": "^1.2.8",
+    "msgpackr": "^1.11.5"
   }
 }
