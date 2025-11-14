@@ -1,6 +1,6 @@
 "use strict";
 (() => {
-  // ../voidmerge/ts/voidmerge-code/dist/obj-meta.js
+  // node_modules/@voidmerge/voidmerge-code/dist/obj-meta.js
   var ObjMeta = class _ObjMeta {
     #fullPath;
     #sysPrefix;
@@ -80,7 +80,7 @@
     }
   };
 
-  // ../voidmerge/ts/voidmerge-code/dist/index.js
+  // node_modules/@voidmerge/voidmerge-code/dist/index.js
   var RequestCodeConfig = class {
     /**
      * Type marker.
@@ -2367,30 +2367,49 @@
       return this.#hdr;
     }
   };
+  async function vmStaticSiteObjCheck(req) {
+    const appPath = req.meta.appPath();
+    if (!appPath.startsWith("static-site~")) {
+      throw new Error("static-site~: Invalid appPath");
+    }
+    const parsed = unpack(req.data);
+    if (!parsed || typeof parsed !== "object" || typeof parsed.mime !== "string" || !(parsed.data instanceof Uint8Array) || !(parsed.hash instanceof Uint8Array)) {
+      throw new Error(`static-site~: Invalid data structure`);
+    }
+  }
+  async function vmStaticSiteFn(req) {
+    if (req.path.startsWith("static-site")) {
+      let appPath = `static-site~${req.path.substring(12).replaceAll("/", "~")}`;
+      if (appPath === "static-site~" || appPath === "static-site~/") {
+        appPath = "static-site~index.html";
+      }
+      const { data } = await objGet({
+        meta: ObjMeta.fromParts({ appPath })
+      });
+      const parsed = unpack(data);
+      return new ResponseFnOk({
+        status: 200,
+        body: parsed.data,
+        headers: new Headers().contentType(parsed.mime).cache().finish()
+      });
+    } else {
+      return new ResponseFnOk({
+        status: 404,
+        body: new TextEncoder().encode("Not Found"),
+        headers: new Headers().contentType("text/plain; charset=utf-8").finish()
+      });
+    }
+  }
+
+  // src/code-standalone.ts
   defineVoidMergeHandler(async (req) => {
     if (req instanceof RequestObjCheck) {
+      await vmStaticSiteObjCheck(req);
       return new ResponseObjCheckOk();
     } else if (req instanceof RequestFn) {
-      if (req.path.startsWith("static-site")) {
-        let appPath = `static-site~${req.path.substring(12)}`;
-        if (appPath === "static-site~" || appPath === "static-site~/") {
-          appPath = "static-site~index.html";
-        }
-        const { data } = await objGet({
-          meta: ObjMeta.fromParts({ appPath })
-        });
-        const parsed = unpack(data);
-        return new ResponseFnOk({
-          status: 200,
-          body: parsed.data,
-          headers: new Headers().contentType(parsed.mime).cache().finish()
-        });
-      } else {
-        return new ResponseFnOk({
-          status: 404,
-          body: new TextEncoder().encode("Not Found"),
-          headers: new Headers().contentType("text/plain; charset=utf-8").finish()
-        });
+      const res = await vmStaticSiteFn(req);
+      if (res) {
+        return res;
       }
     }
     throw new Error("Unhandled Request");

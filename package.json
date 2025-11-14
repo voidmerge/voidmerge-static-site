@@ -7,9 +7,10 @@
     "vm-static-site": "./dist/vm-static-site.js"
   },
   "scripts": {
+    "build:lint": "prettier --write src",
     "build:tsc": "tsc --build",
-    "build:esbuild": "esbuild --sourcemap --bundle src/code.ts --outfile=dist/bundle-code.js",
-    "build": "npm run build:tsc && npm run build:esbuild",
+    "build:esbuild": "esbuild --sourcemap --bundle src/code-standalone.ts --outfile=dist/bundle-code.js",
+    "build": "npm run build:lint && npm run build:tsc && npm run build:esbuild",
     "start": "mkdir -p /tmp/vm-static-site && vm serve --sys-admin bobo --store /tmp/vm-static-site",
     "install": "npm run build && vm ctx-setup --url http://127.0.0.1:8080 --token bobo --context vm-static-site --ctx-admin bobo && vm ctx-config --url http://127.0.0.1:8080 --token bobo --context vm-static-site --ctx-admin bobo --code-file ./dist/bundle-code.js"
   },
@@ -17,11 +18,12 @@
     "@types/minimist": "^1.2.5",
     "@types/node": "^24.10.1",
     "esbuild": "^0.27.0",
+    "prettier": "^3.6.2",
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@voidmerge/voidmerge-client": "^0.0.8",
-    "@voidmerge/voidmerge-code": "^0.0.8",
+    "@voidmerge/voidmerge-client": "^0.0.9",
+    "@voidmerge/voidmerge-code": "^0.0.9",
     "mime": "^4.1.0",
     "minimist": "^1.2.8",
     "msgpackr": "^1.11.5"

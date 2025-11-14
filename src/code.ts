@@ -1,4 +1,4 @@
-import * as VM from "@voidmerge/voidmerge-code"
+import * as VM from "@voidmerge/voidmerge-code";
 import { unpack } from "msgpackr";
 
 interface File {
@@ -29,34 +29,54 @@ class Headers {
   }
 }
 
-VM.defineVoidMergeHandler(async (req) => {
-  if (req instanceof VM.RequestObjCheck) {
-    return new VM.ResponseObjCheckOk();
-  } else if (req instanceof VM.RequestFn) {
-    if (req.path.startsWith("static-site")) {
-      let appPath = `static-site~${req.path.substring(12)}`;
-      if (appPath === "static-site~" || appPath === "static-site~/") {
-        appPath = "static-site~index.html";
-      }
-      const { data } = await VM.objGet({
-        meta: VM.ObjMeta.fromParts({ appPath }),
-      });
-      const parsed = unpack(data) as File;
-      return new VM.ResponseFnOk({
-        status: 200,
-        body: parsed.data,
-        headers: new Headers().contentType(parsed.mime).cache().finish(),
-      });
-    } else {
-      return new VM.ResponseFnOk({
-        status: 404,
-        body: new TextEncoder().encode("Not Found"),
-        headers: new Headers()
-          .contentType("text/plain; charset=utf-8")
-          .finish(),
-      });
-    }
+/**
+ * Execute this in your VoidMergeHandler to validate static site objects.
+ */
+export async function vmStaticSiteObjCheck(req: VM.RequestObjCheck) {
+  const appPath = req.meta.appPath();
+
+  if (!appPath.startsWith("static-site~")) {
+    throw new Error("static-site~: Invalid appPath");
   }
 
-  throw new Error("Unhandled Request");
-})
+  const parsed: any = unpack(req.data);
+
+  if (
+    !parsed ||
+    typeof parsed !== "object" ||
+    typeof parsed.mime !== "string" ||
+    !(parsed.data instanceof Uint8Array) ||
+    !(parsed.hash instanceof Uint8Array)
+  ) {
+    throw new Error(`static-site~: Invalid data structure`);
+  }
+}
+
+/**
+ * Execute this in your VoidMergeHandler to handle /static-site/* requests.
+ */
+export async function vmStaticSiteFn(
+  req: VM.RequestFn,
+): Promise<VM.ResponseFnOk | undefined> {
+  if (req.path.startsWith("static-site")) {
+    let appPath = `static-site~${req.path.substring(12).replaceAll("/", "~")}`;
+    if (appPath === "static-site~" || appPath === "static-site~/") {
+      appPath = "static-site~index.html";
+    }
+    const { data } = await VM.objGet({
+      meta: VM.ObjMeta.fromParts({ appPath }),
+    });
+    const parsed = unpack(data) as File;
+    return new VM.ResponseFnOk({
+      status: 200,
+      body: parsed.data,
+      headers: new Headers().contentType(parsed.mime).cache().finish(),
+    });
+  } else {
+    return new VM.ResponseFnOk({
+      status: 404,
+      body: new TextEncoder().encode("Not Found"),
+      headers: new Headers().contentType("text/plain; charset=utf-8").finish(),
+    });
+  }
+}
