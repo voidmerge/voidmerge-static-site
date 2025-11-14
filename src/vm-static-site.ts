@@ -24,16 +24,16 @@ publish           : publish directory contents as static site data
 async function main() {
   const args = minimist(argv.slice(2), {
     alias: {
-      "h": "help",
+      h: "help",
     },
     boolean: ["help"],
     string: ["dir", "url", "ctx", "token"],
     default: {
-      "dir": ".",
-      "url": "http://127.0.0.1:8080",
-      "ctx": "vm-static-site",
-      "token": "bobo",
-    }
+      dir: ".",
+      url: "http://127.0.0.1:8080",
+      ctx: "vm-static-site",
+      token: "bobo",
+    },
   });
 
   let cmd = (args["_"] && args["_"][0]) || "help";
@@ -56,10 +56,13 @@ async function main() {
   }
 }
 
-main().then(() => {}, (err) => {
-  console.error(err);
-  exit(1);
-})
+main().then(
+  () => {},
+  (err) => {
+    console.error(err);
+    exit(1);
+  },
+);
 
 interface GatherResult {
   full: string;
@@ -109,13 +112,14 @@ async function publish(
     hash,
     mime: item.type,
   });
+  const appPath = `static-site~${item.app.replaceAll("/", "~")}`;
+  console.log(appPath, `${out.byteLength} bytes, ${item.type}`);
   const { meta } = await objPut({
     url,
     ctx,
     token,
-    appPath: `static-site~${item.app}`,
+    appPath,
     createdSecs: Date.now() / 1000,
     data: out,
   });
-  console.log(meta);
 }
