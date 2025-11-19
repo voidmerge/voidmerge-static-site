@@ -24,6 +24,7 @@
   "dependencies": {
     "@voidmerge/voidmerge-client": "^0.0.9",
     "@voidmerge/voidmerge-code": "^0.0.9",
+    "base64-js": "^1.5.1",
     "mime": "^4.1.0",
     "minimist": "^1.2.8",
     "msgpackr": "^1.11.5"

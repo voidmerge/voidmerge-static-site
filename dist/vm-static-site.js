@@ -6,6 +6,7 @@ import { join, extname, resolve, sep } from "node:path";
 import { createHash } from "crypto";
 import { pack } from "msgpackr";
 import { objPut } from "@voidmerge/voidmerge-client";
+import { b64Enc } from "./b64.js";
 function help() {
     console.log(`
 usage: vm-static-site <CMD> [OPTIONS]
@@ -79,7 +80,7 @@ async function publish(item, url, ctx, token) {
     const len = data.byteLength;
     const hasher = createHash("sha256");
     hasher.update(data);
-    const hash = hasher.digest();
+    const hash = b64Enc(hasher.digest());
     const out = pack({
         data,
         hash,

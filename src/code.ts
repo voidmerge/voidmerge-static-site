@@ -3,7 +3,7 @@ import { unpack } from "msgpackr";
 
 interface File {
   data: Uint8Array;
-  hash: Uint8Array;
+  hash: string;
   mime: string;
 }
 
@@ -21,6 +21,11 @@ class Headers {
 
   cache(): Headers {
     this.#hdr["cache-control"] = "public, max-age=7200, s-maxage=7200";
+    return this;
+  }
+
+  etag(etag: string): Headers {
+    this.#hdr["etag"] = `"${etag}"`;
     return this;
   }
 
@@ -44,9 +49,9 @@ export async function vmStaticSiteObjCheck(req: VM.RequestObjCheck) {
   if (
     !parsed ||
     typeof parsed !== "object" ||
+    typeof parsed.hash !== "string" ||
     typeof parsed.mime !== "string" ||
-    !(parsed.data instanceof Uint8Array) ||
-    !(parsed.hash instanceof Uint8Array)
+    !(parsed.data instanceof Uint8Array)
   ) {
     throw new Error(`static-site~: Invalid data structure`);
   }
@@ -67,10 +72,31 @@ export async function vmStaticSiteFn(
       meta: VM.ObjMeta.fromParts({ appPath }),
     });
     const parsed = unpack(data) as File;
+
+    const headers = new Headers()
+      .contentType(parsed.mime)
+      .etag(parsed.hash)
+      .cache()
+      .finish();
+
+    if (
+      req.headers["if-none-match"] &&
+      req.headers["if-none-match"].includes(parsed.hash)
+    ) {
+      // if the etags match, we can send the 304 Not Modified response
+      return new VM.ResponseFnOk({
+        status: 304,
+        // 304 responses have an empty body
+        body: new Uint8Array(0),
+        // 304 responses have the same headers as 200 responses
+        headers,
+      });
+    }
+
     return new VM.ResponseFnOk({
       status: 200,
       body: parsed.data,
-      headers: new Headers().contentType(parsed.mime).cache().finish(),
+      headers,
     });
   } else {
     return new VM.ResponseFnOk({
